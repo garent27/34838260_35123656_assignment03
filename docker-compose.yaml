@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # Keep ONLY Spark if you are using this container for local notebooks/apps
+  spark:
+    image: fit3182/pyspark
+    container_name: spark
+    ports:
+      - "8889:8888"
+      - "4041:4040"
+    volumes:
+      - ./:/home/student
+    working_dir: /home/student
+    command: >
+        sh -c "pip install --upgrade pip && 
+              pip install \"pymongo[srv]\" pandas matplotlib folium ipywidgets && 
+              echo '👉 Open Jupyter Notebook at http://localhost:8889' &&
+              jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''"

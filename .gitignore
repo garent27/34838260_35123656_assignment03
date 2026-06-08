@@ -1,0 +1,12 @@
+venv/
+env/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.jupyter
+.local
+.ivy2
+.ipython
+.cache/
+checkpoints/
+fit3182-cloud-key.pem
