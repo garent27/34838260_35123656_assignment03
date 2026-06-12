@@ -73,8 +73,7 @@ ssh -i "fit3182-cloud-key.pem" ubuntu@13.55.144.115
 ```
 
 ### Step 1.2: Download Setup Script
-
-```bash
+Either just copy and paste the contents of setup-kafka.sh from your repository or follow the steps below.
 nano setup-kafka.sh
 # Paste the entire contents of setup-kafka.sh from your repository
 # Press CTRL+O, Enter, CTRL+X to save and exit
@@ -135,7 +134,7 @@ ssh -i "your-key-pair.pem" ubuntu@YOUR_SPARK_PUBLIC_IP
 ```
 
 ### Step 2.2: Download Spark Setup Script
-
+Either just copy and paste the contents of setup-spark.sh from your repository or follow the steps below.
 ```bash
 nano setup-spark.sh
 # Paste the entire contents of setup-spark.sh from your repository
