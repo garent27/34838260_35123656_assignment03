@@ -3,15 +3,18 @@
 
 # %%
 import os
+import json
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, ArrayType, BooleanType
+from pyspark.sql.streaming import StreamingQueryListener
 from utils import *
 from pymongo import MongoClient, UpdateOne
 import config
 import math
 import time
 import shutil
+from datetime import datetime
 
 # %% [markdown]
 # ## Spark Structured Streaming Ingestion
@@ -69,7 +72,8 @@ schema = StructType([
                 StructField("event_id", StringType()),
                 StructField("car_plate", StringType()),
                 StructField("timestamp", StringType()),
-                StructField("speed_reading", StringType())
+                StructField("speed_reading", StringType()),
+                StructField("producer_sent_time", StringType())
             ])
         )
     )
@@ -113,15 +117,35 @@ def read_number_stream(topic_name):
             col("events.event_id"),
             col("events.car_plate"),
             to_timestamp(col("events.timestamp")).alias("event_time"),
+            to_timestamp(col("events.producer_sent_time")).alias("producer_sent_time"),
             col("events.speed_reading").cast("double").alias("speed_reading")
         )
     )
 
+def get_latency(df):
+    return (
+        df.withColumn("ingest_time", current_timestamp())
+          .withColumn(
+              "latency_seconds",
+              expr(
+                  "unix_timestamp(ingest_time) - unix_timestamp(producer_sent_time)"
+              )
+          )
+          .select(
+              col("event_id"),
+              col("event_time").alias("timestamp"),
+              col("latency_seconds")
+          )
+    )
 
 try:
     stream_a = read_number_stream("camera-events-A")
     stream_b = read_number_stream("camera-events-B")
     stream_c = read_number_stream("camera-events-C")
+    latency_a = get_latency(stream_a)
+    latency_b = get_latency(stream_b)
+    latency_c = get_latency(stream_c)
+
     print("Kafka streams created.")
 except Exception as ex:
     print(str(ex))
@@ -231,6 +255,7 @@ stream_c, invalid_c = split_valid_invalid(stream_c)
 mongo_client = MongoClient(config.MONGO_URI)
 db = mongo_client[config.DB_NAME]
 cameras = list(db.cameras.find({}, {'_id' : 0}))
+stream_metrics = db["stream_metrics"]
 
 # Parameterizable speed-limit thresholds per camera as per the requirements
 try:
@@ -569,6 +594,27 @@ def write_to_mongo_invalid(batch_df, batch_id):
     """
     batch_df.foreachPartition(write_invalid)
 
+def write_latency_partition(iterator):
+    mongo_client = MongoClient(config.MONGO_URI)
+    db = mongo_client[config.DB_NAME]
+
+    records = [row.asDict() for row in iterator]
+
+    if records:
+        for attempt in range(config.RETRY_COUNT):
+            try:
+                db.stream_latency.insert_many(records)
+                break
+            except Exception as ex:
+                print(str(ex))
+                time.sleep(2 ** attempt)
+
+
+def write_latency_to_mongo(batch_df, batch_id):
+    batch_df.foreachPartition(write_latency_partition)
+
+
+
 # %% [markdown]
 # ## Checkpointing and Recovery
 # 
@@ -601,6 +647,10 @@ shutil.rmtree("./checkpoints/invalid_c", ignore_errors=True)
 # %%
 try:
     spark.sparkContext.setLogLevel("ERROR")
+    q_latency_A = latency_a.writeStream.foreachBatch(write_latency_to_mongo).start()
+    q_latency_B = latency_b.writeStream.foreachBatch(write_latency_to_mongo).start()
+    q_latency_C = latency_c.writeStream.foreachBatch(write_latency_to_mongo).start()
+
     
     # Start streaming queries with checkpointing for fault tolerance
     qA = instant_violations_A.writeStream \
@@ -649,6 +699,45 @@ try:
         .option("checkpointLocation", "./checkpoints/invalid_c")
         .start()
     )
+
+
+    queries = {
+        "latency_A": q_latency_A,
+        "latency_B": q_latency_B,
+        "latency_C": q_latency_C
+    }
+
+    last_batches = {
+        "latency_A": -1,
+        "latency_B": -1,
+        "latency_C": -1
+    }
+
+    while any(q.isActive for q in queries.values()):
+
+        for query_name, query in queries.items():
+
+            progress = query.lastProgress
+
+            if progress:
+
+                batch_id = progress["batchId"]
+
+                if batch_id > last_batches[query_name]:
+
+                    stream_metrics.insert_one({
+                        "query": query_name,
+                        "batch_id": batch_id,
+                        "timestamp": progress["timestamp"],
+                        "num_input_rows": progress["numInputRows"],
+                        "input_rows_per_second": progress["inputRowsPerSecond"],
+                        "processed_rows_per_second": progress["processedRowsPerSecond"]
+                    })
+
+                    last_batches[query_name] = batch_id
+
+        time.sleep(1)
+
     spark.streams.awaitAnyTermination()
 except Exception as ex:
     print(str(ex))

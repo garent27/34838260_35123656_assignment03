@@ -8,5 +8,6 @@ __pycache__/
 .ivy2
 .ipython
 .cache/
+.config/
 checkpoints/
 fit3182-cloud-key.pem
