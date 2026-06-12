@@ -67,12 +67,49 @@ echo "=================================================="
 echo "Setup Complete! Running deployment containers..."
 echo "=================================================="
 
+# Apply docker group privileges and run remaining commands in subshell
+newgrp docker << 'DOCKER_COMMANDS'
+
+# Navigate directly into the Kafka directory layout
+
 # Fire up the containers in detached daemon configuration mode
-sudo docker-compose up -d
+docker compose up -d
+
+echo "Waiting for Kafka broker to initialize..."
+sleep 5  # Gives Kafka a few seconds to fully boot up before accepting topics
+
+echo "Creating Kafka topics..."
+
+# 1. Create Topic A
+docker exec kafka kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic camera-events-A \
+  --partitions 3 \
+  --replication-factor 1
+
+# 2. Create Topic B
+docker exec kafka kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic camera-events-B \
+  --partitions 3 \
+  --replication-factor 1
+
+# 3. Create Topic C
+docker exec kafka kafka-topics.sh \
+  --bootstrap-server localhost:9092 \
+  --create \
+  --topic camera-events-C \
+  --partitions 3 \
+  --replication-factor 1
 
 echo ""
 echo "Pipeline Status Check:"
-sudo docker ps
+docker ps
 echo ""
+
 echo "To test consumer events stream, execute:"
-echo "sudo docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic camera-events-A --from-beginning"
+echo "docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic camera-events-A --from-beginning"
+
+DOCKER_COMMANDS

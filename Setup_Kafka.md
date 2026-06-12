@@ -64,6 +64,35 @@ ssh -i "your-key-pair.pem" ubuntu@YOUR_NODE_PUBLIC_IP
 
 # 🚀 Step-by-Step Installation
 
+## Option 1: Automated Setup (Recommended)
+
+Run the automated setup script to configure everything at once:
+
+```bash
+# Download or create the setup script
+chmod +x setup-kafka.sh
+
+# Run the setup script
+./setup-kafka.sh
+```
+
+This script will:
+1. Update packages and install Docker utilities
+2. Start Docker daemon and configure group permissions
+3. Create the `~/fit3182-kafka` workspace directory
+4. Automatically detect and capture your EC2 public IP
+5. Generate the `docker-compose.yml` configuration
+6. Start Kafka and Zookeeper containers
+7. Create all three Kafka topics automatically
+8. Display container status
+
+Skip to **Verification** section below if using the automated script.
+
+---
+
+## Option 2: Manual Setup
+
+Follow these steps to configure Kafka manually.
 
 ---
 
@@ -208,3 +237,74 @@ zookeeper
 ```bash
 docker exec -it kafka kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic camera-events-A --from-beginning
 ```
+
+---
+
+# ✅ Verification
+
+After running either the automated or manual setup, verify your Kafka cluster is working:
+
+## 1. Check Containers are Running
+
+```bash
+docker ps
+```
+
+You should see both containers running:
+- `zookeeper`
+- `kafka`
+
+## 2. List Created Topics
+
+```bash
+docker exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --list
+```
+
+You should see:
+```text
+camera-events-A
+camera-events-B
+camera-events-C
+```
+
+## 3. Test Topic Connectivity
+
+From your Spark or producer node, test the connection to your Kafka broker:
+
+```bash
+# Replace YOUR_EC2_PUBLIC_IP with your instance's public IP
+telnet YOUR_EC2_PUBLIC_IP 9092
+```
+
+---
+
+# 🔧 Troubleshooting
+
+## Containers not starting
+
+```bash
+# Check container logs
+docker logs kafka
+docker logs zookeeper
+
+# Restart containers
+docker compose restart
+```
+
+## Topics not created
+
+```bash
+# Check if Kafka is ready
+docker exec kafka kafka-broker-api-versions.sh --bootstrap-server localhost:9092
+
+# Manually create topics
+docker exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic camera-events-A --partitions 3 --replication-factor 1
+docker exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic camera-events-B --partitions 3 --replication-factor 1
+docker exec kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic camera-events-C --partitions 3 --replication-factor 1
+```
+
+## Connection refused from remote producer/consumer
+
+- Verify the security group allows inbound traffic on port `9092`
+- Confirm `KAFKA_ADVERTISED_LISTENERS` is set to your **public IP** (not localhost or private IP)
+- Check the EC2 instance public IP matches the configuration

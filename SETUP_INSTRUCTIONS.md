@@ -85,16 +85,18 @@ Example:
 ```bash
 ssh -i "fit3182-cloud-key.pem" ubuntu@13.55.144.115
 ```
+Save and exit:
+
 
 ### 1.2 Download the Kafka Setup Script
 
 ```bash
-# Option A: Using curl to download directly
-curl -O https://raw.githubusercontent.com/YOUR_REPO/setup-kafka.sh
-
-# Option B: Create the file manually
+# Create the file manually
 nano setup-kafka.sh
 # Then paste the contents of setup-kafka.sh
+* Press `CTRL + O`
+* Press `Enter`
+* Press `CTRL + X`
 ```
 
 ### 1.3 Make the Script Executable
