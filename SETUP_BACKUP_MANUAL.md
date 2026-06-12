@@ -806,24 +806,12 @@ Databases: [...]
 
 ---
 
-## Step 2: Create `.env` File
+## Step 2: Set `.env` File
 
 In your local project root:
 
 ```bash
-# Windows PowerShell
-@"
-KAFKA_IP=13.55.144.115
-MONGO_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?appName=Cluster0
-DB_NAME=fit3182_awas
-"@ | Out-File -Encoding UTF8 .env
-
-# Or on Mac/Linux
-cat > .env << EOF
-KAFKA_IP=13.55.144.115
-MONGO_URI=mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/?appName=Cluster0
-DB_NAME=fit3182_awas
-EOF
+set your IP address in .env file
 ```
 
 ---
