@@ -537,3 +537,6 @@ After completing setup:
 4. Monitor real-time dashboards for anomalies
 5. Analyze historical data in the visualizations notebook
 
+
+Notice: 
+local directory is for local running of the producer and streaming similar to assignment 2. And we used that to calculate the performance analysis
