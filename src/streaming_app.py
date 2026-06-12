@@ -7,7 +7,6 @@ import json
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
 from pyspark.sql.types import StructField, StructType, StringType, IntegerType, ArrayType, BooleanType
-from pyspark.sql.streaming import StreamingQueryListener
 from utils import *
 from pymongo import MongoClient, UpdateOne
 import config

@@ -1,10 +1,10 @@
 # 1. Keep Kafka pointing to AWS Cloud Broker
-IP_ADDRESS = "34.207.236.209"
+IP_ADDRESS = "<YOUR_AWS_KAFKA_NODE_PUBLIC_IP>"
 
 # 2. Add a Local IP for MongoDB / Visualizations on your laptop
 LOCAL_HOST = "127.0.0.1"
 
-MONGO_URI = "mongodb+srv://khangwei0001_db_user:7gttxKZRqrKYmKqC@fit3182-awas.70l4zwt.mongodb.net/?appName=fit3182-awas"
+MONGO_URI = "<YOUR_MONGODB_ATLAS_CONNECTION_URI>"
 
 # MONGODB
 DB_NAME = "fit3182_awas" # Set mongodb database name for AWAS application

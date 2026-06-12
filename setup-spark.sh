@@ -41,11 +41,26 @@ read -p "👉 Enter your complete MongoDB Atlas Connection URI: " MONGO_URI
 # 5. Programmatically Drafting Supporting Files
 echo "[5/6] Creating config.py, utils.py, and streaming_app.py placeholders..."
 
-# Write config.py automatically injecting the input IP
+# Write config.py automatically injecting the input IP and constants
 cat << EOF > config.py
 # System Network Configurations
 IP_ADDRESS = "${KAFKA_IP}"
-MONGO_ATLAS_URI = "${MONGO_URI}"
+MONGO_URI = "${MONGO_URI}"
+
+# Database Configuration
+LOCAL_HOST = "127.0.0.1"
+DB_NAME = "fit3182_awas"
+RETRY_COUNT = 3
+
+# Streaming Configuration
+WATERMARK = "5 minutes"
+WINDOW_INTERVAL_AB = None
+WINDOW_INTERVAL_BC = None
+
+# Speed Limits by Camera
+CAMERA_A_SPEED_LIMIT = None
+CAMERA_B_SPEED_LIMIT = None
+CAMERA_C_SPEED_LIMIT = None
 EOF
 
 # Touch placeholders for custom operational files
