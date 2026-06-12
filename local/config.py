@@ -1,5 +1,5 @@
 # 1. Keep Kafka pointing to AWS Cloud Broker
-IP_ADDRESS = "34.207.236.209"
+IP_ADDRESS = "192.168.0.103" 
 
 # 2. Add a Local IP for MongoDB / Visualizations on your laptop
 LOCAL_HOST = "127.0.0.1"
